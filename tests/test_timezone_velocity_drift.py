@@ -44,3 +44,18 @@ def test_velocity_psi_drift_monitor():
     psi_skewed = monitor.calculate_psi(scores_skewed)
 
     assert psi_skewed > 0.10  # Drift detected
+
+
+def test_psi_returns_zero_below_minimum_sample_count():
+    monitor = VelocityPSIDriftMonitor(num_bins=5, min_samples=10)
+
+    # Too few samples to be meaningful: no drift alarm.
+    assert monitor.calculate_psi([0.99, 0.98, 0.97]) == 0.0
+
+
+def test_psi_uses_seeded_reference_and_reports_drift():
+    monitor = VelocityPSIDriftMonitor(num_bins=5, min_samples=1)
+    monitor.set_reference([0.1, 0.3, 0.5, 0.7, 0.9, 0.2, 0.4, 0.6, 0.8])
+
+    skewed = [0.99, 0.98, 0.97, 0.99, 0.96, 0.95, 0.98]
+    assert monitor.calculate_psi(skewed) > 0.10

@@ -957,21 +957,46 @@ class VelocityPSIDriftMonitor:
 
     Tracks velocity feature distributions over sliding time windows across timezones
     to detect feature drift and miscalibration.
+
+    The reference distribution is learned from observed data rather than a fixed
+    uniform baseline. A fixed uniform baseline flags ordinary variation as drift
+    when per-window sample counts are small (a regression of #3458); comparing
+    each window against a data-driven rolling reference avoids those false
+    alarms. The first ``calculate_psi`` call establishes the baseline and
+    returns ``0.0`` (warm-up); later calls compare the current window against
+    the rolling reference and update it.
     """
 
-    def __init__(self, num_bins: int = 5):
+    def __init__(
+        self,
+        num_bins: int = 5,
+        min_samples: int = 5,
+        baseline_smoothing: float = 0.5,
+    ):
         self.num_bins = num_bins
-        # Baseline reference distribution (uniform/calibrated)
-        self.baseline_dist = np.full(num_bins, 1.0 / num_bins)
+        self.min_samples = min_samples
+        self.baseline_smoothing = baseline_smoothing
+        self.baseline_dist: Optional[np.ndarray] = None
+
+    def set_reference(self, reference_scores: List[float]) -> None:
+        """Seed the reference distribution from an explicit baseline window."""
+        hist, _ = np.histogram(
+            reference_scores, bins=self.num_bins, range=(0.0, 1.0)
+        )
+        total = int(np.sum(hist))
+        if total == 0:
+            self.baseline_dist = np.full(self.num_bins, 1.0 / self.num_bins)
+        else:
+            self.baseline_dist = hist / float(total)
 
     def calculate_psi(self, current_scores: List[float]) -> float:
-        """Calculates Population Stability Index (PSI) between baseline and current distribution.
+        """Calculates Population Stability Index (PSI) between the rolling reference and current distribution.
 
         PSI < 0.10: No significant drift
         0.10 <= PSI < 0.25: Moderate drift
         PSI >= 0.25: Significant drift / miscalibration alert
         """
-        if not current_scores:
+        if not current_scores or len(current_scores) < self.min_samples:
             return 0.0
 
         hist, _ = np.histogram(current_scores, bins=self.num_bins, range=(0.0, 1.0))
@@ -980,9 +1005,23 @@ class VelocityPSIDriftMonitor:
             return 0.0
 
         target_dist = np.maximum(hist / float(total), 1e-4)
-        expected_dist = np.maximum(self.baseline_dist, 1e-4)
 
+        if self.baseline_dist is None:
+            # Warm-up: the first window establishes the reference distribution,
+            # so there is nothing to drift from yet.
+            self.baseline_dist = target_dist
+            return 0.0
+
+        expected_dist = np.maximum(self.baseline_dist, 1e-4)
         psi = np.sum((target_dist - expected_dist) * np.log(target_dist / expected_dist))
+
+        # Rolling update so the reference tracks slow, normal changes in the
+        # feature without being perturbed by any single noisy window.
+        self.baseline_dist = (
+            self.baseline_smoothing * target_dist
+            + (1.0 - self.baseline_smoothing) * self.baseline_dist
+        )
+
         return float(max(0.0, round(psi, 4)))
 
 
