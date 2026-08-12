@@ -40,12 +40,6 @@ OPTIONAL_DEPENDENCY_MODULES = {
 # Known structural problems that are out of scope for this change and tracked
 # separately, listed explicitly so they cannot hide a new regression.
 KNOWN_UNIMPORTABLE = {
-    # src/integrations/ contains BOTH servicenow.py and a servicenow/ directory
-    # with no __init__.py. The module shadows the directory, so
-    # src.integrations.servicenow.client is unreachable. Resolving the
-    # ambiguity changes which one wins for existing importers, so it needs its
-    # own change rather than being folded in here.
-    "src.integrations.servicenow.client",
     # Imported for its side effects by src.api.main before its own module
     # object is complete; importing it standalone hits the partially
     # initialised module. It works correctly through the application.
