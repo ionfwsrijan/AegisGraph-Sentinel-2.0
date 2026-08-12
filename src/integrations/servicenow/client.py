@@ -341,7 +341,7 @@ class ServiceNowWorkflowIntegration:
         # Create parent incident
         incident = await self.client.create_incident(
             title=f"Investigation Required: {case_id}",
-            description=f"Investigation workflow triggered by AegisGraph Sentinel",
+            description="Investigation workflow triggered by AegisGraph Sentinel",
             priority=2,
         )
         

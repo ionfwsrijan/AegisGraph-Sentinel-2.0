@@ -24,7 +24,7 @@ def print_graph_summary(graph: nx.Graph, max_nodes: int = 20, logger: logging.Lo
         return
 
     log("="*60)
-    log(f"--- AegisGraph Local State Inspector ---")
+    log("--- AegisGraph Local State Inspector ---")
     log("="*60)
     log(f"Type:       {type(graph).__name__}")
     log(f"Nodes:      {graph.number_of_nodes()}")

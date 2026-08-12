@@ -84,7 +84,7 @@ def write_robustness_report(results: Iterable[EvaluationResult], path: Union[Pat
     
     if results:
         lines.append("## Executive Summary\n\n")
-        lines.append(f"This report evaluates the resilience of the **HTGAT** GNN model under structural and feature attacks. ")
+        lines.append("This report evaluates the resilience of the **HTGAT** GNN model under structural and feature attacks. ")
         lines.append(f"Evaluation was performed across **{results[0].n_graphs}** graph snapshots using a decision threshold of **{results[0].threshold}**.\n\n")
         lines.append("Specifically, we simulate a **Decoy Node Injection** attack where adversaries connect new dummy accounts ")
         lines.append("to high-centrality hubs to dilute their GNN risk signals. We measure the drop in standard classification metrics ")

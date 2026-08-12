@@ -176,7 +176,7 @@ class BoardReportingModule:
         Returns:
             GovernanceReport
         """
-        logger.info(f"Generating risk report")
+        logger.info("Generating risk report")
         
         risk_categories = {
             "fraud_risk": random.uniform(0.4, 0.8),

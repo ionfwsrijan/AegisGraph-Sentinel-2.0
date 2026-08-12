@@ -59,7 +59,7 @@ class InvestigationAgent:
         self._store = store or get_soc_store()
         self._graph = graph or get_graph_service()
         self._agent_type = AgentType.INVESTIGATION
-        self._agent_id = f"investigation_agent"
+        self._agent_id = "investigation_agent"
     
     def analyze_entity(self, entity_id: str, context: Dict[str, Any] = None) -> InvestigationResult:
         """Analyze an entity for fraud indicators.

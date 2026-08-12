@@ -452,7 +452,7 @@ def load_thresholds(config_path: str = "config/thresholds.yaml",
         errors = validate_thresholds(thresholds)
         if errors:
             raise ThresholdValidationError(
-                f"Threshold validation failed:\n" + "\n".join(f"  - {e}" for e in errors)
+                "Threshold validation failed:\n" + "\n".join(f"  - {e}" for e in errors)
             )
     
     logger.info(f"Loaded thresholds from {config_path}")
