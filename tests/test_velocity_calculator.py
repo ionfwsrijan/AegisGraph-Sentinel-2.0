@@ -12,6 +12,7 @@ Regression coverage for:
 
 import json
 import math
+from datetime import datetime, timezone
 
 import networkx as nx
 import pytest
@@ -313,6 +314,22 @@ class TestBurstDetection:
         ]
         features = calculator.detect_burst(txs, 30.0)
         assert features["burst_count"] == 1
+
+    def test_datetime_current_time_accepted(self, calculator):
+        txs = [
+            make_tx("A", "B", 100, 0.0, "t1"),
+            make_tx("B", "C", 50, 10.0, "t2"),
+            make_tx("C", "D", 25, 2000.0, "t3"),
+        ]
+        moment = datetime.fromtimestamp(30.0, tz=timezone.utc)
+        features = calculator.detect_burst(txs, moment)
+        assert features["burst_count"] == 2
+        assert features == calculator.detect_burst(txs, 30.0)
+
+    def test_non_numeric_non_list_current_time_rejected(self, calculator):
+        txs = [make_tx("A", "B", 100, 0.0, "t1")]
+        with pytest.raises(TypeError):
+            calculator.detect_burst(txs, "not-a-time")
 
     def test_baseline_excludes_old_transactions(self, calculator):
         txs = [

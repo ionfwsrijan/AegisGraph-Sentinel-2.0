@@ -282,10 +282,21 @@ class VelocityCalculator:
         normalized = self._normalize_transactions(transactions)
 
         # Backward-compatible overload: detect_burst(recent, historical) -> float.
-        if not isinstance(current_time, (int, float)):
+        if isinstance(current_time, (list, tuple)):
             recent = normalized
             baseline = self._normalize_transactions(current_time)
             return self._burst_score_from_windows(recent, baseline)
+
+        # A datetime current_time is converted to epoch seconds; anything that
+        # is not a number, datetime, or historical list is rejected rather than
+        # being iterated as if it were a transaction sequence.
+        if isinstance(current_time, datetime):
+            current_time = current_time.timestamp()
+        elif not isinstance(current_time, (int, float, np.integer, np.floating)):
+            raise TypeError(
+                "current_time must be a number, datetime, or historical "
+                f"transaction list; got {type(current_time).__name__}"
+            )
 
         # Get transactions in burst window.
         # Only elapsed times in [0, burst_window] count as recent; a bare
