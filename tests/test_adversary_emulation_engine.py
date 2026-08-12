@@ -77,18 +77,21 @@ class TestCampaignGenerator:
 
 
 class TestSimulationEngine:
-    def test_execute_marks_steps_executed(self, engine, generator, profile):
+    def test_execute_without_evaluator_marks_steps_not_executed(self, engine, generator, profile):
         campaign = generator.generate(profile, target="t")
 
         result = engine.execute(campaign)
 
-        assert all(s.status == "EXECUTED" for s in campaign.steps)
+        assert result.validated is False
+        assert all(s.status == "NOT_EXECUTED" for s in campaign.steps)
+        assert all(s.success is False for s in campaign.steps)
+        assert all(s.detected is False for s in campaign.steps)
 
-    def test_execute_success_rate_for_nonempty(self, engine, generator, profile):
+    def test_execute_without_evaluator_reports_zero_success(self, engine, generator, profile):
         result = engine.execute(generator.generate(profile, target="t"))
 
-        assert result.success_rate == 1.0
-        assert result.detected_steps == 3
+        assert result.success_rate == 0.0
+        assert result.detected_steps == 0
         assert result.total_steps == 3
         assert result.campaign_id is not None
 
