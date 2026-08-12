@@ -236,6 +236,19 @@ class TestChainVelocityMetrics:
         features = calculator.compute_chain_velocity(txs, graph)
         assert features["total_distance"] == 2
 
+    def test_caller_graph_is_not_mutated(self, calculator):
+        graph = nx.Graph()
+        graph.add_edge("A", "B", timestamp=5000.0)
+        graph.add_edge("B", "C", timestamp=5001.0)
+        graph.add_edge("X", "Y", timestamp=1000.0)
+        txs = [
+            make_tx("A", "B", 100, 5000.0, "t1"),
+            make_tx("B", "C", 50, 5001.0, "t2"),
+        ]
+        calculator.compute_chain_velocity(txs, graph)
+        assert ("X", "Y") in graph.edges()
+        assert "X" in graph
+
 
 class TestKineticEnergy:
     """Kinetic energy feature."""

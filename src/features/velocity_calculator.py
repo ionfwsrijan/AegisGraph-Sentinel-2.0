@@ -195,11 +195,14 @@ class VelocityCalculator:
                 'avg_hop_time': 0.0,
             }
 
-        # Prune stale edges from graph based on time_window
+        # Prune stale edges from graph based on time_window.
+        # Work on a copy so the caller's graph is never mutated: pruning
+        # permanently deletes edges older than the cutoff and their now-isolated
+        # nodes, which would silently corrupt any analysis reusing the graph.
         if transactions:
             latest_ts = max(t.timestamp for t in transactions)
             cutoff = latest_ts - self.time_window
-            self.prune_stale_edges(graph, cutoff)
+            graph = self.prune_stale_edges(graph.copy(), cutoff)
 
         # Filter to valid temporal chain: monotonically increasing timestamps
         # with max_hop_delay between consecutive hops.
