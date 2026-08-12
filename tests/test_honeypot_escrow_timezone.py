@@ -23,9 +23,9 @@ from src.features.honeypot_escrow import (
 )
 
 
-def naive_utc() -> datetime:
-    """A naive UTC datetime, as records persisted before this change carry."""
-    return _utcnow().replace(tzinfo=None)
+def naive_local() -> datetime:
+    """A naive local datetime, as `datetime.now()` produces."""
+    return datetime.now()
 
 
 def manager(**kwargs) -> HoneypotEscrowManager:
@@ -51,9 +51,10 @@ class TestUtcHelpers:
     def test_utcnow_is_utc(self):
         assert _utcnow().utcoffset() == timedelta(0)
 
-    def test_ensure_aware_treats_naive_as_utc(self):
-        naive = datetime(2026, 1, 1, 12, 0, 0)
-        assert _ensure_aware(naive) == datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    def test_ensure_aware_treats_naive_as_local(self):
+        naive = datetime.now()
+        aware = _ensure_aware(naive)
+        assert aware == naive.astimezone(timezone.utc)
 
     def test_ensure_aware_preserves_an_aware_instant(self):
         offset = timezone(timedelta(hours=5, minutes=30))
@@ -113,7 +114,7 @@ class TestAutoRelease:
         the victim's funds held indefinitely."""
         mgr = manager(auto_release_hours=2.0)
         honeypot = activate(mgr)
-        honeypot.auto_release_time = naive_utc() - timedelta(hours=1)
+        honeypot.auto_release_time = naive_local() - timedelta(hours=1)
 
         mgr.check_auto_release()
 
@@ -122,7 +123,7 @@ class TestAutoRelease:
     def test_a_naive_future_deadline_is_still_respected(self):
         mgr = manager(auto_release_hours=2.0)
         honeypot = activate(mgr)
-        honeypot.auto_release_time = naive_utc() + timedelta(hours=1)
+        honeypot.auto_release_time = naive_local() + timedelta(hours=1)
 
         mgr.check_auto_release()
 
@@ -153,7 +154,7 @@ class TestTimeRemaining:
     def test_time_remaining_survives_a_naive_persisted_deadline(self):
         mgr = manager(auto_release_hours=2.0)
         honeypot = activate(mgr)
-        honeypot.auto_release_time = naive_utc() + timedelta(hours=1)
+        honeypot.auto_release_time = naive_local() + timedelta(hours=1)
 
         remaining = mgr.get_active_honeypots()[0]['time_remaining_seconds']
 
@@ -250,7 +251,7 @@ class TestResponseTimeCalculation:
             location={},
         )
 
-        naive_arrest = (naive_utc() + timedelta(minutes=15)).isoformat()
+        naive_arrest = (naive_local() + timedelta(minutes=15)).isoformat()
         mgr.record_arrest(honeypot.honeypot_id, {"arrest_time": naive_arrest})
 
         assert mgr.stats['total_arrests'] >= 1

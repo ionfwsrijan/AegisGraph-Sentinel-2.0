@@ -51,15 +51,14 @@ def _utcnow() -> datetime:
 
 
 def _ensure_aware(value: datetime) -> datetime:
-    """Interpret a naive datetime as UTC, leaving aware values untouched.
+    """Interpret a naive datetime as local time, leaving aware values untouched.
 
-    Records persisted before this change carry naive datetimes, and callers may
-    supply either form. Mixing the two raises `TypeError` on comparison or
-    subtraction, which in `check_auto_release` would leave escrowed funds held
-    indefinitely, so every boundary coerces to aware here.
+    Naive datetimes are produced by `datetime.now()`, which returns local time.
+    Treating them as UTC shifts the release deadline by the host's UTC offset,
+    so on a non-UTC host an expired honeypot would be held for hours (money-
+    handling code). `astimezone` attaches the local zone to naive values and
+    converts aware values to UTC, so every boundary coerces to aware UTC here.
     """
-    if value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
     return value.astimezone(timezone.utc)
 
 
