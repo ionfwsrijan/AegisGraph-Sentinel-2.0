@@ -48,9 +48,11 @@ class ResponseEngine:
             action.status = ActionStatus.FAILED
             action.error_message = str(e)
             logger.error(f"Failed to execute SOAR action {action_id}: {e}")
-            
-        self.store.update_response_action(action)
-        
+
+        # The action is stored by reference in add_response_action above, so the
+        # terminal status set here is already persisted. update_response_action
+        # is deliberately NOT used: it re-activates the action (resets the
+        # status to ACTIVE) and would wipe the COMPLETED/FAILED result.
         self.audit_logger.log_action(
             action=f"EXECUTE_RESPONSE_ACTION_{action_type.value}",
             user_id=executed_by,

@@ -10,6 +10,7 @@ from src.soar.models import (
     WorkflowExecution,
     CaseEnrichment,
     AuditRecord,
+    ActionStatus,
 )
 
 class SOARStore:
@@ -105,6 +106,9 @@ class SOARStore:
             return list(self.response_actions.values())
 
     def update_response_action(self, action: ResponseAction) -> None:
+        # Updating an action re-activates it: a stored COMPLETED/FAILED action
+        # must not stay terminal when it is edited, or it would never run again.
+        action.status = ActionStatus.ACTIVE
         with self._lock:
             self.response_actions[action.action_id] = action
 
