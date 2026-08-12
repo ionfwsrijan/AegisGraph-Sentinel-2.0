@@ -255,7 +255,9 @@ class VelocityCalculator:
         
         # Velocity = distance / time
         velocity = total_distance / total_time
-        avg_hop_time = total_time / len(valid_transactions)
+        # N transactions span N-1 hops, so average hop time divides by N-1.
+        num_hops = len(valid_transactions) - 1
+        avg_hop_time = total_time / num_hops if num_hops > 0 else 0.0
         
         return {
             'chain_velocity': velocity,
